@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ instagram_username }} live follower counter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <link href="https://unpkg.com/@pqina/flip/dist/flip.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@pqina/flip/dist/flip.min.js"></script>
+    <style>
+        .tick {
+          font-size:{{ font_size }}rem; white-space:nowrap; font-family:arial,sans-serif;
+        }
+
+        .tick-flip,.tick-text-inline {
+          font-size:2.5em;
+        }
+
+        body {
+           background-color: {{ page_bg }} !important;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           height: 100dvh;
+           margin: 0;
+        }
+
+        .tick-flip-panel {
+           color: {{ tick_fg }} !important;
+        }
+
+        .tick-flip {
+           font-family: !important;
+        }
+
+        .tick-flip-panel-text-wrapper {
+           line-height: 1.45 !important;
+        }
+
+        .tick-flip-panel {
+           background-color: {{ tick_bg }} !important;
+        }
+
+        .tick-flip {
+           border-radius:0.12em !important;
+        }
+
+        main {
+            display: flex;
+            gap: {{ font_size | int * 5 }}px;
+        }
+
+        .ig-logo svg {
+            height: {{ font_size }}rem;
+            width: auto;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+<main>
+    {% if ig_logo == "1" %}
+    <div class="ig-logo">
+        {% include "icons/ig_logo.svg" %}
+    </div>
+    {% endif %}
+
+    <div class="tick"
+         data-value="0"
+         data-did-init="handleTickInit"
+         data-transform="{{ transform | safe }}"
+         data-credits="false"
+    >
+        <div data-repeat="true">
+            <span data-view="flip"></span>
+        </div>
+    </div>
+</main>
+
+<script>
+    function handleTickInit(tick) {
+
+        const tickHeight = document.querySelector('.tick').offsetHeight;
+        document.querySelector('.ig-logo svg').style.height = tickHeight + "px";
+
+        Tick.data.poll(
+            'api/followers',
+            function(response) {
+                const data = JSON.parse(response);
+                if (data.followers !== undefined) {
+                    tick.value = data.followers;
+                } else if (data.error !== undefined) {
+                    console.error(data.error);
+                }
+            },
+            {{ refresh_interval }}
+        );
+    }
+</script>
+
+</body>
+</html>
