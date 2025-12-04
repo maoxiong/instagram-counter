@@ -13,7 +13,7 @@ load_dotenv()
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    interval = max(60, int(os.getenv("REFRESH_INTERVAL", 60)))
+    interval = max(5, int(os.getenv("REFRESH_INTERVAL", 10)))
 
     padding = os.getenv("PADDING", "00000")
     transform = f"arrive(9, .001) -&gt; round -&gt; pad('{ padding }') -&gt; split -&gt; delay(rtl, 100, 150)" if os.getenv("LONG_ANIMATE", "0") == "1" else f"pad('{ padding }')"
@@ -23,7 +23,7 @@ def home(request: Request):
         {
             "request": request,  # required
             "instagram_username": os.getenv("INSTAGRAM_USERNAME", "softcatmemes"),
-            "refresh_interval": interval * 1000,
+            "refresh_interval": interval * 60000,
             "transform": transform,
             "font_size": os.getenv("FONT_SIZE", "4"),
             "font_family": os.getenv("FONT_FAMILY", ""),
