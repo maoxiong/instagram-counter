@@ -26,9 +26,10 @@ def home(request: Request):
             "refresh_interval": interval * 1000,
             "transform": transform,
             "font_size": os.getenv("FONT_SIZE", "4"),
+            "font_family": os.getenv("FONT_FAMILY", ""),
             "page_bg": os.getenv("PAGE_BG", "#000000"),
-            "tick_bg": os.getenv("TICK_BG", "#333232"),
-            "tick_fg": os.getenv("TICK_FG", "#edebeb"),
+            "flip_bg": os.getenv("TICK_BG", "#333232"),
+            "flip_fg": os.getenv("TICK_FG", "#edebeb"),
             "ig_logo": os.getenv("IG_LOGO", "1"),
         }
     )
