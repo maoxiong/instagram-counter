@@ -8,12 +8,23 @@
     <script src="https://unpkg.com/@pqina/flip/dist/flip.min.js"></script>
     <style>
         body {
-           background-color: {{ page_bg }} !important;
+           background-color: {{ page_bg | safe }} !important;
            display: flex;
            justify-content: center;
            align-items: center;
            height: 100dvh;
            margin: 0;
+        }
+
+        main {
+            display: flex;
+            gap: {{ font_size | int * 5 }}px;
+        }
+
+        .ig-logo svg {
+            height: {{ font_size }}rem;
+            width: auto;
+            display: block;
         }
 
         .tick {
@@ -30,23 +41,12 @@
         }
 
         .tick-flip-panel {
-           color: {{ flip_fg }} !important;
-           background-color: {{ flip_bg }} !important;
+           color: {{ flip_fg | safe }} !important;
+           background-color: {{ flip_bg | safe }} !important;
         }
 
         .tick-flip-panel-text-wrapper {
            line-height: 1.45 !important;
-        }
-
-        main {
-            display: flex;
-            gap: {{ font_size | int * 5 }}px;
-        }
-
-        .ig-logo svg {
-            height: {{ font_size }}rem;
-            width: auto;
-            display: block;
         }
     </style>
 </head>
