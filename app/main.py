@@ -19,7 +19,10 @@ def home(request: Request):
     interval = max(5, int(os.getenv("REFRESH_INTERVAL", 10)))
 
     padding = os.getenv("PADDING", "00000")
-    transform = f"arrive(9, .001) -&gt; round -&gt; pad('{ padding }') -&gt; split -&gt; delay(rtl, 100, 150)" if os.getenv("LONG_ANIMATE", "0") == "1" else f"pad('{ padding }')"
+    transform = f"arrive(.2) -&gt; round -&gt; pad('{ padding }') -&gt; split -&gt; delay(rtl, 100, 150)" if os.getenv("LONG_ANIMATE", "0") == "1" else f"pad('{ padding }')"
+
+    start_value = followers().get("followers", 0)
+    start_value = (start_value // 10) * 10
 
     return templates.TemplateResponse(
         "home.html",
@@ -27,6 +30,7 @@ def home(request: Request):
             "request": request,  # required
             "instagram_username": os.getenv("INSTAGRAM_USERNAME", "softcatmemes"),
             "refresh_interval": interval * 60000,
+            "start_value": start_value,
             "transform": transform,
             "font_size": os.getenv("FONT_SIZE", "4"),
             "font_family": os.getenv("FONT_FAMILY", ""),
