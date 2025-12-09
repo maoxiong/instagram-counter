@@ -22,6 +22,10 @@ def home(request: Request):
     transform = f"arrive(.2) -&gt; round -&gt; pad('{ padding }') -&gt; split -&gt; delay(rtl, 100, 150)" if os.getenv("SKIP_ANIMATION", "0") == "0" else f"pad('{ padding }')"
 
     start_value = followers().get("followers", 0)
+    # if the start value is divisible by 10, subtract 10 from it so that there will be a change on boot up
+    if start_value > 0 and start_value % 10 == 0:
+        start_value -= 10
+    # round down to the nearest 10 (giving us a nice animation run-up)
     start_value = (start_value // 10) * 10
 
     return templates.TemplateResponse(
