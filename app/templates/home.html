@@ -9,12 +9,13 @@
     <script src="https://unpkg.com/@pqina/flip/dist/flip.min.js"></script>
     <style>
         body {
-           background-color: {{ page_bg | safe }} !important;
+           background-color: {{ page_bg }} !important;
            display: flex;
            justify-content: center;
            align-items: center;
            height: 100dvh;
            margin: 0;
+           overflow: hidden;
         }
 
         main {
@@ -42,8 +43,8 @@
         }
 
         .tick-flip-panel {
-           color: {{ flip_fg | safe }} !important;
-           background-color: {{ flip_bg | safe }} !important;
+           color: {{ flip_fg }} !important;
+           background-color: {{ flip_bg }} !important;
         }
 
         .tick-flip-panel-text-wrapper {
@@ -54,7 +55,7 @@
 <body>
 
 <main>
-    {% if ig_logo == "1" %}
+    {% if show_ig_logo %}
     <div class="ig-logo">
         {% include "icons/ig_logo.svg" %}
     </div>
@@ -75,8 +76,10 @@
 <script>
     function handleTickInit(tick) {
 
+        {% if show_ig_logo %}
         const tickHeight = document.querySelector('.tick').offsetHeight;
         document.querySelector('.ig-logo svg').style.height = tickHeight + "px";
+        {% endif %}
 
         Tick.data.poll(
             'api/followers',
@@ -88,10 +91,14 @@
                     console.error(data.error);
                 }
             },
-            {{ refresh_interval }}
+            {{ refresh_interval * 60000 }}
         );
     }
 </script>
+
+{% if settings_enabled %}
+    {% include "settings.html" %}
+{% endif %}
 
 </body>
 </html>
