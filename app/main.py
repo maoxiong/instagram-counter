@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 import os
+import redis
 import requests
 
 app = FastAPI(title="Instagram Follower Counter")
@@ -28,8 +29,13 @@ defaults = {
     "SKIP_ANIMATION": "0",
 }
 
+# use redis if supplied
+redis_url = os.getenv("REDIS_URL")
+
 # So that instagram doesn't block your scraping IP
-minimum_refresh_interval = 5
+# It's really not advised to set this below 5
+refresh_fallback = 5
+minimum_refresh_interval = int(os.getenv("MINIMUM_REFRESH_INTERVAL") or refresh_fallback) or refresh_fallback
 
 def get_var(request: Request, key):
     if os.getenv("INSTAGRAM_USERNAME"):
@@ -84,6 +90,20 @@ def home(request: Request):
 @app.get("/api/followers")
 def followers(request: Request):
 
+    username = get_var(request, "INSTAGRAM_USERNAME")
+    redis_key = f"instagram_counter_${username}"
+
+    # if redis url, try getting the followers from that first
+    if redis_url:
+        try:
+            r = redis.from_url(redis_url)
+            follower_count = r.get(redis_key)
+            if follower_count:
+                return {"followers": int(follower_count), "redis": True}
+
+        except Exception as e:
+            print(f"Redis error (Get): {e}")
+
     url = "https://i.instagram.com/api/v1/users/web_profile_info/"
 
     headers = {
@@ -91,7 +111,7 @@ def followers(request: Request):
     }
 
     try:
-        resp = requests.get(url, headers=headers, params={"username": get_var(request, "INSTAGRAM_USERNAME")})
+        resp = requests.get(url, headers=headers, params={"username": username})
         resp.raise_for_status()         # raises error on 4xx/5xx
 
         json_data = resp.json()
@@ -103,7 +123,13 @@ def followers(request: Request):
             .get("count", 0)
         )
 
-        return {"followers": followers}
+        if redis_url:
+            try:
+                r.set(redis_key, followers, ex=minimum_refresh_interval * 60)
+            except Exception as e:
+                print(f"Redis error (Set): {e}")
+
+        return {"followers": followers, "redis": False}
 
     except Exception as e:
         return {"error": str(e)}
