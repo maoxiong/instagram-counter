@@ -90,8 +90,6 @@ def home(request: Request):
 @app.get("/api/followers")
 def followers(request: Request):
 
-    return {"followers":360}
-
     username = get_var(request, "INSTAGRAM_USERNAME")
     redis_key = f"instagram_counter_${username}"
 
