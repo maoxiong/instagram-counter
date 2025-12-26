@@ -205,14 +205,11 @@
             </div>
 
             <div class="full-width checkbox-row">
-                <input id="SKIP_ANIMATION" name="SKIP_ANIMATION" type="checkbox" {{ "checked" if skip_animation else ""
-                }} />
+                <input id="SKIP_ANIMATION" name="SKIP_ANIMATION" type="checkbox" {{ "checked" if skip_animation else "" }} />
                 <label for="SKIP_ANIMATION">Skip animation</label>
             </div>
 
-            <label for="REFRESH_INTERVAL">Refresh interval (
-                <output id="output">{{ refresh_interval }}</output>
-                mins)</label>
+            <label for="REFRESH_INTERVAL">Refresh interval (<output id="output">{{ refresh_interval }}</output> mins)</label>
             <input id="REFRESH_INTERVAL" name="REFRESH_INTERVAL" type="range" min="{{ minimum_refresh_interval}}"
                    max="60" step="1" value="{{ refresh_interval }}" oninput="output.value = value"/>
 
