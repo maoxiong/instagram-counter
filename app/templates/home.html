@@ -74,6 +74,8 @@
 </main>
 
 <script>
+    const VERSION_CODE = "{{ version_code }}";
+
     function handleTickInit(tick) {
 
         {% if show_ig_logo %}
@@ -89,6 +91,11 @@
                     tick.value = data.followers;
                 } else if (data.error !== undefined) {
                     console.error(data.error);
+                }
+
+                // Check for updates
+                if (data.version !== undefined && data.version !== VERSION_CODE) {
+                    location.reload();
                 }
             },
             {{ refresh_interval * 60000 }}

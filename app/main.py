@@ -8,6 +8,9 @@ import os
 import redis
 import requests
 
+# Used for auto updates
+VERSION_CODE = "2.3"
+
 app = FastAPI(title="Instagram Follower Counter")
 templates = Jinja2Templates(directory="app/templates")
 
@@ -71,6 +74,7 @@ def home(request: Request, response: Response):
         "home.html",
         {
             "request": request,  # required
+            "version_code": VERSION_CODE,
             "instagram_username": get_var(request,"INSTAGRAM_USERNAME"),
             "refresh_interval": interval,
             "minimum_refresh_interval": minimum_refresh_interval,
@@ -103,7 +107,7 @@ def followers(request: Request, response: Response):
             follower_count = r.get(redis_key)
             if follower_count:
                 response.headers["X-Redis-Cache"] = "HIT"
-                return {"followers": int(follower_count)}
+                return {"followers": int(follower_count), "version": VERSION_CODE}
 
         except Exception as e:
             print(f"Redis error (Get): {e}")
@@ -136,7 +140,7 @@ def followers(request: Request, response: Response):
             except Exception as e:
                 print(f"Redis error (Set): {e}")
 
-        return {"followers": followers}
+        return {"followers": followers, "version": VERSION_CODE}
 
     except Exception as e:
         return {"error": str(e)}
