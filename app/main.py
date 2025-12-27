@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -48,7 +48,7 @@ async def favicon():
     return FileResponse("app/static/favicon.ico")
 
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request):
+def home(request: Request, response: Response):
     interval = max(minimum_refresh_interval, int(get_var(request, "REFRESH_INTERVAL")))
 
     pad_character = get_var(request, "PAD_CHARACTER")
@@ -58,7 +58,7 @@ def home(request: Request):
     skip_animation = get_var(request, "SKIP_ANIMATION") == "1"
     transform = f"arrive(.2) -&gt; round -&gt; pad('{ padding }') -&gt; split -&gt; delay(rtl, 100, 150)" if not skip_animation else f"pad('{ padding }')"
 
-    start_value = followers(request).get("followers", 0)
+    start_value = followers(request, response).get("followers", 0)
     # if the start value is divisible by 10, subtract 10 from it so that there will be a change on boot up
     if start_value > 0 and start_value % 10 == 0:
         start_value -= 10
@@ -91,7 +91,7 @@ def home(request: Request):
     )
 
 @app.get("/api/followers")
-def followers(request: Request):
+def followers(request: Request, response: Response):
 
     username = get_var(request, "INSTAGRAM_USERNAME")
     redis_key = f"instagram_counter_${username}"
@@ -102,7 +102,8 @@ def followers(request: Request):
             r = redis.from_url(redis_url)
             follower_count = r.get(redis_key)
             if follower_count:
-                return {"followers": int(follower_count), "redis": True}
+                response.headers["X-Redis-Cache"] = "HIT"
+                return {"followers": int(follower_count)}
 
         except Exception as e:
             print(f"Redis error (Get): {e}")
@@ -128,11 +129,14 @@ def followers(request: Request):
 
         if redis_url:
             try:
-                r.set(redis_key, followers, ex=minimum_refresh_interval * 60)
+                response.headers["X-Redis-Cache"] = "MISS"
+                # make cache expire 5 seconds less than the minimum refresh interval, so each javascript update will get the latest.
+                # otherwise it might still get the cahced version, so need to wait 2 refreshes for an update!
+                r.set(redis_key, followers, ex=(minimum_refresh_interval * 60) - 5)
             except Exception as e:
                 print(f"Redis error (Set): {e}")
 
-        return {"followers": followers, "redis": False}
+        return {"followers": followers}
 
     except Exception as e:
         return {"error": str(e)}
