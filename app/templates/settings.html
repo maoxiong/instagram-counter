@@ -92,7 +92,7 @@
     }
 
     .btn-primary {
-      background: #2563eb;
+      background: #22c55e;
       color: #ffffff;
     }
 
@@ -134,6 +134,7 @@
         <div class="settings-grid">
             <label for="INSTAGRAM_USERNAME">Instagram username</label>
             <input id="INSTAGRAM_USERNAME" name="INSTAGRAM_USERNAME" type="text"
+                   maxlength="30"
                    placeholder="{{ defaults['INSTAGRAM_USERNAME'] }}" value="{{ instagram_username }}"/>
 
             <label for="FONT_SIZE">Font size</label>
@@ -163,7 +164,7 @@
                             maxlength="7"
                             value="{{ flip_bg }}"
                     >
-                    <input type="color" class="color-picker" value="{{ flip_bg }}">
+                    <input id="FLIP_BG_PICKER" type="color" class="color-picker" value="{{ flip_bg }}">
                 </div>
             </div>
 
@@ -178,7 +179,7 @@
                             maxlength="7"
                             value="{{ flip_fg }}"
                     >
-                    <input type="color" class="color-picker" value="{{ flip_fg }}">
+                    <input id="FLIP_FG_PICKER" type="color" class="color-picker" value="{{ flip_fg }}">
                 </div>
             </div>
 
@@ -193,7 +194,7 @@
                             maxlength="7"
                             value="{{ page_bg }}"
                     >
-                    <input type="color" class="color-picker" value="{{ page_bg }}">
+                    <input id="PAGE_BG_PICKER" type="color" class="color-picker" value="{{ page_bg }}">
                 </div>
             </div>
 
@@ -220,12 +221,12 @@
         <div class="modal-footer">
             <div>
                 <a href="https://github.com/maoxiong/instagram-counter" target="_blank">
-                    Instagram Counter by Maoxiong
+                    Instagram Counter on GitHub
                 </a>
             </div>
             <div>
                 <button type="button" class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="save()">OK</button>
+                <button type="button" class="btn btn-primary" onclick="save()">Save</button>
             </div>
         </div>
     </div>
@@ -233,6 +234,18 @@
 
 <script>
     const $ = id => document.getElementById(id);
+
+    // Username filter
+    const username = $("INSTAGRAM_USERNAME");
+    username.addEventListener("input", () => {
+      // Remove invalid characters
+      username.value = username.value
+        .replace(/[^A-Za-z0-9._]/g, "")
+        // Prevent multiple dots
+        .replace(/\.{2,}/g, ".")
+        // Prevent starting dot
+        .replace(/^\./, "");
+    });
 
     // Color field setup
     document.querySelectorAll(".color-field").forEach(field => {
@@ -256,7 +269,27 @@
     const modalOverlay = $("settingsModalOverlay");
 
     function openSettings() { modalOverlay.classList.add("show"); }
-    function closeSettings() { modalOverlay.classList.remove("show"); }
+    function closeSettings() {
+        // Reset back to current
+        $("INSTAGRAM_USERNAME").value = "{{ instagram_username }}";
+        $("FONT_SIZE").value = "{{ font_size }}";
+        $("FONT_FAMILY").value = "{{ font_family | safe }}";
+        $("PAD_CHARACTER").value = "{{ pad_character }}";
+        $("MINIMUM_DIGITS").value = "{{ minimum_digits }}";
+        $("FLIP_BG").value = "{{ flip_bg }}";
+        $("FLIP_BG_PICKER").value = "{{ flip_bg }}";
+        $("FLIP_FG").value = "{{ flip_fg }}";
+        $("FLIP_FG_PICKER").value = "{{ flip_fg }}";
+        $("PAGE_BG").value = "{{ page_bg }}";
+        $("PAGE_BG_PICKER").value = "{{ page_bg }}";
+        $("SHOW_IG_LOGO").checked = {{ "true" if show_ig_logo else "false" }};
+        $("SKIP_ANIMATION").checked = {{ "true" if skip_animation else "false" }};
+        $("REFRESH_INTERVAL").value = "{{ refresh_interval }}";
+        $("output").value = "{{ refresh_interval }}";
+
+        // Hide modal
+        modalOverlay.classList.remove("show");
+    }
 
     hotspot.addEventListener("dblclick", openSettings);
 
@@ -273,7 +306,6 @@
     modalOverlay.addEventListener("click", e => {
       if (e.target === modalOverlay) closeSettings();
     });
-
 
     // Save logic
     function save() {
