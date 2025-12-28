@@ -3,48 +3,25 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+from app.helpers import followers_obj, get_var, get_os_var, username_blocked
+from app.settings import defaults, app_name, instagram_url, useragent_string, redis_header_key
 
-import os
 import redis
 import requests
 
 # Used for auto updates
-VERSION_CODE = "2.3"
+VERSION_CODE = "2.5"
 
-app = FastAPI(title="Instagram Follower Counter")
+app = FastAPI(title=get_os_var("APP_NAME", app_name))
 templates = Jinja2Templates(directory="app/templates")
 
 load_dotenv()
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-defaults = {
-    "INSTAGRAM_USERNAME": "softcatmemes",
-    "REFRESH_INTERVAL": 10,
-    "MINIMUM_DIGITS": 5,
-    "PAD_CHARACTER": "0",
-    "FONT_SIZE": "4",
-    "FONT_FAMILY": "",
-    "PAGE_BG": "#000000",
-    "FLIP_BG": "#333232",
-    "FLIP_FG": "#edebeb",
-    "SHOW_IG_LOGO": "1",
-    "SKIP_ANIMATION": "0",
-}
-
-# use redis if supplied
-redis_url = os.getenv("REDIS_URL")
-
 # So that instagram doesn't block your scraping IP
-# It's really not advised to set this below 5
-refresh_fallback = 5
-minimum_refresh_interval = int(os.getenv("MINIMUM_REFRESH_INTERVAL") or refresh_fallback) or refresh_fallback
-
-def get_var(request: Request, key):
-    if os.getenv("INSTAGRAM_USERNAME"):
-        return os.getenv(key) or defaults[key]
-    else:
-        return request.cookies.get(key) or defaults[key]
+# Can be overridden with MINIMUM_REFRESH_INTERVAL
+minimum_refresh_interval = int(get_os_var("MINIMUM_REFRESH_INTERVAL", 5)) or 5
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -68,13 +45,14 @@ def home(request: Request, response: Response):
     # round down to the nearest 10 (giving us a nice animation run-up)
     start_value = (start_value // 10) * 10
 
-    settings_enabled = bool(os.getenv("INSTAGRAM_USERNAME") or request.cookies.get("LOCK_SETTINGS") == "1") is False
+    settings_enabled = bool(get_os_var("INSTAGRAM_USERNAME") or request.cookies.get("LOCK_SETTINGS") == "1") is False
 
     return templates.TemplateResponse(
         "home.html",
         {
             "request": request,  # required
             "version_code": VERSION_CODE,
+            "app_name":get_os_var("APP_NAME", app_name),
             "instagram_username": get_var(request,"INSTAGRAM_USERNAME"),
             "refresh_interval": interval,
             "minimum_refresh_interval": minimum_refresh_interval,
@@ -98,6 +76,12 @@ def home(request: Request, response: Response):
 def followers(request: Request, response: Response):
 
     username = get_var(request, "INSTAGRAM_USERNAME")
+
+    if username_blocked(username):
+        return followers_obj(0, VERSION_CODE, True)
+
+    # use redis if supplied
+    redis_url = get_os_var("REDIS_URL")
     redis_key = f"instagram_counter_${username}"
 
     # if redis url, try getting the followers from that first
@@ -106,20 +90,18 @@ def followers(request: Request, response: Response):
             r = redis.from_url(redis_url)
             follower_count = r.get(redis_key)
             if follower_count:
-                response.headers["X-Redis-Cache"] = "HIT"
-                return {"followers": int(follower_count), "version": VERSION_CODE}
+                response.headers[redis_header_key] = "HIT"
+                return followers_obj(int(follower_count), VERSION_CODE)
 
         except Exception as e:
             print(f"Redis error (Get): {e}")
 
-    url = "https://i.instagram.com/api/v1/users/web_profile_info/"
-
     headers = {
-        "User-Agent": "Instagram 76.0.0.15.395 Android (24/7.0; 640dpi; 1440x2560; samsung; SM-G930F; herolte; samsungexynos8890; en_US; 138226743)"
+        "User-Agent": useragent_string
     }
 
     try:
-        resp = requests.get(url, headers=headers, params={"username": username})
+        resp = requests.get(instagram_url, headers=headers, params={"username": username})
         resp.raise_for_status()         # raises error on 4xx/5xx
 
         json_data = resp.json()
@@ -133,14 +115,14 @@ def followers(request: Request, response: Response):
 
         if redis_url:
             try:
-                response.headers["X-Redis-Cache"] = "MISS"
+                response.headers[redis_header_key] = "MISS"
                 # make cache expire 5 seconds less than the minimum refresh interval, so each javascript update will get the latest.
-                # otherwise it might still get the cahced version, so need to wait 2 refreshes for an update!
+                # otherwise it might still get the cached version, so need to wait 2 refreshes for an update!
                 r.set(redis_key, followers, ex=(minimum_refresh_interval * 60) - 5)
             except Exception as e:
                 print(f"Redis error (Set): {e}")
 
-        return {"followers": followers, "version": VERSION_CODE}
+        return followers_obj(followers, VERSION_CODE)
 
     except Exception as e:
         return {"error": str(e)}
