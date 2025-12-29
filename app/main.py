@@ -3,14 +3,14 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-from app.helpers import followers_obj, get_var, get_os_var, username_blocked
+from app.helpers import followers_obj, get_var, get_os_var, username_blocked, font_color_from_bg_color
 from app.settings import defaults, app_name, instagram_url, useragent_string, redis_header_key
 
 import redis
 import requests
 
 # Used for auto updates
-VERSION_CODE = "2.5"
+VERSION_CODE = "2.6"
 
 app = FastAPI(title=get_os_var("APP_NAME", app_name))
 templates = Jinja2Templates(directory="app/templates")
@@ -67,6 +67,7 @@ def home(request: Request, response: Response):
             "skip_animation": skip_animation,
             "pad_character": pad_character,
             "minimum_digits": digits,
+            "error_color": font_color_from_bg_color(get_var(request,"PAGE_BG")),
             "defaults": defaults,
             "settings_enabled": settings_enabled
         }

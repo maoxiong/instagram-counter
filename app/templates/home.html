@@ -54,15 +54,14 @@
 
         .error {
             display: none;
-            background-color: red;
-            color: white;
+            color: {{ error_color }};
             font-weight: bold;
             position: fixed;
             left: 0;
             bottom: 0;
             width: 100%;
             z-index: 9999;
-            padding: 5px;
+            padding: 10px;
             text-align: center;
         }
     </style>
@@ -113,7 +112,7 @@
                 // Check for errors (such as username block or instagram ip block)
                 const errorDiv = document.querySelector('.error');
                 if (data.error !== undefined) {
-                    errorDiv.innerHTML = data.error;
+                    errorDiv.textContent = "⚠️ " + data.error;
                     errorDiv.style.display = "block";
                 } else {
                     errorDiv.style.display = "none";
