@@ -53,16 +53,25 @@
         }
 
         .error {
-            display: none;
-            color: {{ error_color }};
-            font-weight: bold;
+            display: flex;
             position: fixed;
             left: 0;
             bottom: 0;
-            width: 100%;
             z-index: 9999;
             padding: 10px;
-            text-align: center;
+            cursor: pointer;
+            gap: 5px;
+            align-items: center;
+            font-size: 20px;
+        }
+
+        .error .message {
+            color: {{ text_color }};
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -87,10 +96,21 @@
     </div>
 </main>
 
-<div class="error"></div>
+<div class="error hidden">
+    ⚠️
+    <span class="message hidden"></span>
+</div>
 
 <script>
     const VERSION_CODE = "{{ version_code }}";
+
+    // Setup error message display
+    const errorDiv = document.querySelector('.error');
+    const errorMessageDiv = errorDiv.querySelector('.message');
+
+    errorDiv.addEventListener('click', () => {
+        errorMessageDiv.classList.toggle("hidden");
+    });
 
     function handleTickInit(tick) {
 
@@ -110,12 +130,12 @@
                 }
 
                 // Check for errors (such as username block or instagram ip block)
-                const errorDiv = document.querySelector('.error');
                 if (data.error !== undefined) {
-                    errorDiv.textContent = "⚠️ " + data.error;
-                    errorDiv.style.display = "block";
+                    errorMessageDiv.textContent = data.error;
+                    errorDiv.classList.remove("hidden");
                 } else {
-                    errorDiv.style.display = "none";
+                    errorMessageDiv.classList.add("hidden");
+                    errorDiv.classList.add("hidden");
                 }
 
                 // Check for updates

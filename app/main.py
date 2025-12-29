@@ -10,7 +10,7 @@ import redis
 import requests
 
 # Used for auto updates
-VERSION_CODE = "2.6.1"
+VERSION_CODE = "2.6.2"
 
 app = FastAPI(title=get_os_var("APP_NAME", app_name))
 templates = Jinja2Templates(directory="app/templates")
@@ -67,7 +67,7 @@ def home(request: Request, response: Response):
             "skip_animation": skip_animation,
             "pad_character": pad_character,
             "minimum_digits": digits,
-            "error_color": font_color_from_bg_color(get_var(request,"PAGE_BG")),
+            "text_color": font_color_from_bg_color(get_var(request,"PAGE_BG")),
             "defaults": defaults,
             "settings_enabled": settings_enabled
         }
