@@ -10,7 +10,7 @@ import redis
 import requests
 
 # Used for auto updates
-VERSION_CODE = "2.6"
+VERSION_CODE = "2.6.1"
 
 app = FastAPI(title=get_os_var("APP_NAME", app_name))
 templates = Jinja2Templates(directory="app/templates")
