@@ -13,6 +13,15 @@ username_not_allowed = "Username not in allowed list"
 # Redis cache header
 redis_header_key = "X-Redis-Cache"
 
+# Maximum refresh interval
+maximum_refresh_interval = 60
+
+# Instagram username max length
+instagram_username_max_length = 30
+
+# Maximum font size
+maximum_font_size = 20
+
 # All the defaults
 defaults = {
     "INSTAGRAM_USERNAME": "hypermaoxiong",

@@ -147,6 +147,11 @@
             transform: rotate(360deg);
         }
     }
+
+    output {
+        color: #60809b;
+        font-weight: bold;
+    }
 </style>
 
 <div id="settingsHotspot"></div>
@@ -154,92 +159,43 @@
 <div id="settingsModalOverlay">
     <div id="settingsModal">
         <div class="settings-grid">
-            <label for="INSTAGRAM_USERNAME">Instagram username</label>
-            <input id="INSTAGRAM_USERNAME" name="INSTAGRAM_USERNAME" type="text"
-                   maxlength="30"
-                   placeholder="{{ defaults['INSTAGRAM_USERNAME'] }}" value="{{ instagram_username }}"/>
-
-            <label for="FONT_SIZE">Font size</label>
-            <input id="FONT_SIZE" name="FONT_SIZE" type="number" min="1" step="1" inputmode="numeric"
-                   placeholder="{{ defaults['FONT_SIZE'] }}" value="{{ font_size }}"/>
-
-            <label for="FONT_FAMILY">Font family</label>
-            <input id="FONT_FAMILY" name="FONT_FAMILY" type="text" placeholder="{{ defaults['FONT_FAMILY'] }}"
-                   value="{{ font_family | safe }}"/>
-
-            <label for="PAD_CHARACTER">Padding character</label>
-            <input id="PAD_CHARACTER" name="PAD_CHARACTER" type="text" maxlength="1"
-                   placeholder="{{ defaults['PAD_CHARACTER'] }}" value="{{ pad_character }}"/>
-
-            <label for="MINIMUM_DIGITS">Minimum digits</label>
-            <input id="MINIMUM_DIGITS" name="MINIMUM_DIGITS" type="number" min="1" step="1" inputmode="numeric"
-                   placeholder="{{ defaults['MINIMUM_DIGITS'] }}" value="{{ minimum_digits }}"/>
-
+{% for setting in settings %}
+    {% if setting.type == "text" %}
+            <label for="{{ setting.name }}">{{ setting.label }}</label>
+            <input id="{{ setting.name }}" name="{{ setting.name }}" type="text"
+                   maxlength="{{ setting.maxlength }}"
+                   placeholder="{{ setting.default }}" value="{{ setting.value }}"/>
+    {% elif setting.type == "slider" %}
+            <label for="{{ setting.name }}">{{ setting.label }} (<output id="{{ setting.name }}_OUTPUT">{{ setting.value }}</output>)</label>
+            <input id="{{ setting.name }}" name="{{ setting.name }}" type="range" min="{{ setting.min }}"
+                   max="{{ setting.max }}" step="{{ setting.step }}" value="{{ setting.value }}" oninput="{{ setting.name }}_OUTPUT.value = value"/>
+    {% elif setting.type == "color" %}
             <div class="color-field">
-                <label for="FLIP_BG">Flipper background</label>
+                <label for="{{ setting.name }}">{{ setting.label }}</label>
                 <div class="color-inputs">
                     <input
-                            id="FLIP_BG"
+                            id="{{ setting.name }}"
                             type="text"
                             class="color-text"
-                            placeholder="{{ defaults['FLIP_BG'] }}"
+                            placeholder="{{ setting.default }}"
                             maxlength="7"
-                            value="{{ flip_bg }}"
+                            value="{{ setting.value }}"
                     >
-                    <input id="FLIP_BG_PICKER" type="color" class="color-picker" value="{{ flip_bg }}">
+                    <input id="{{ setting.name }}_PICKER" type="color" class="color-picker" value="{{ setting.value }}">
                 </div>
             </div>
-
-            <div class="color-field">
-                <label for="FLIP_FG">Flipper digit</label>
-                <div class="color-inputs">
-                    <input
-                            id="FLIP_FG"
-                            type="text"
-                            class="color-text"
-                            placeholder="{{ defaults['FLIP_FG'] }}"
-                            maxlength="7"
-                            value="{{ flip_fg }}"
-                    >
-                    <input id="FLIP_FG_PICKER" type="color" class="color-picker" value="{{ flip_fg }}">
-                </div>
-            </div>
-
-            <div class="color-field">
-                <label for="PAGE_BG">Page background</label>
-                <div class="color-inputs">
-                    <input
-                            id="PAGE_BG"
-                            type="text"
-                            class="color-text"
-                            placeholder="{{ defaults['PAGE_BG'] }}"
-                            maxlength="7"
-                            value="{{ page_bg }}"
-                    >
-                    <input id="PAGE_BG_PICKER" type="color" class="color-picker" value="{{ page_bg }}">
-                </div>
-            </div>
-
+    {% elif setting.type == "checkbox" %}
             <div class="full-width checkbox-row">
-                <input id="SHOW_IG_LOGO" name="SHOW_IG_LOGO" type="checkbox" {{ "checked" if show_ig_logo else "" }} />
-                <label for="SHOW_IG_LOGO">Show Instagram logo</label>
+                <input id="{{ setting.name }}" name="{{ setting.name }}" type="checkbox" {{ "checked" if setting.value else "" }} />
+                <label for="{{ setting.name }}">{{ setting.label }}</label>
             </div>
-
-            <div class="full-width checkbox-row">
-                <input id="SKIP_ANIMATION" name="SKIP_ANIMATION" type="checkbox" {{ "checked" if skip_animation else "" }} />
-                <label for="SKIP_ANIMATION">Skip animation</label>
-            </div>
-
-            <label for="REFRESH_INTERVAL">Refresh interval (<output id="output">{{ refresh_interval }}</output> mins)</label>
-            <input id="REFRESH_INTERVAL" name="REFRESH_INTERVAL" type="range" min="{{ minimum_refresh_interval}}"
-                   max="60" step="1" value="{{ refresh_interval }}" oninput="output.value = value"/>
-
+    {% endif %}
+{% endfor %}
             <div class="full-width checkbox-row" style="margin-top: 20px; color: red; font-weight: bold;">
                 <input id="LOCK_SETTINGS" name="LOCK_SETTINGS" type="checkbox"/>
                 <label for="LOCK_SETTINGS">Lock settings</label>
             </div>
         </div>
-
         <div class="modal-footer">
             <div>
                 <a href="https://github.com/maoxiong/instagram-counter" target="_blank">
@@ -283,6 +239,9 @@
           if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
             picker.value = v;
           }
+          if (v.length === 0) {
+           picker.value = text.placeholder;
+          }
         });
     });
 
@@ -293,21 +252,19 @@
     function openSettings() { modalOverlay.classList.add("show"); }
     function closeSettings() {
         // Reset back to current
-        $("INSTAGRAM_USERNAME").value = "{{ instagram_username }}";
-        $("FONT_SIZE").value = "{{ font_size }}";
-        $("FONT_FAMILY").value = "{{ font_family | safe }}";
-        $("PAD_CHARACTER").value = "{{ pad_character }}";
-        $("MINIMUM_DIGITS").value = "{{ minimum_digits }}";
-        $("FLIP_BG").value = "{{ flip_bg }}";
-        $("FLIP_BG_PICKER").value = "{{ flip_bg }}";
-        $("FLIP_FG").value = "{{ flip_fg }}";
-        $("FLIP_FG_PICKER").value = "{{ flip_fg }}";
-        $("PAGE_BG").value = "{{ page_bg }}";
-        $("PAGE_BG_PICKER").value = "{{ page_bg }}";
-        $("SHOW_IG_LOGO").checked = {{ "true" if show_ig_logo else "false" }};
-        $("SKIP_ANIMATION").checked = {{ "true" if skip_animation else "false" }};
-        $("REFRESH_INTERVAL").value = "{{ refresh_interval }}";
-        $("output").value = "{{ refresh_interval }}";
+{% for setting in settings %}
+    {% if setting.type == "text" %}
+        $("{{ setting.name }}").value = "{{ setting.value }}";
+    {%elif setting.type == "slider" %}
+        $("{{ setting.name }}").value = "{{ setting.value }}";
+        $("{{ setting.name }}_OUTPUT").value = "{{ setting.value }}";
+    {% elif setting.type == "color" %}
+        $("{{ setting.name }}").value = "{{ setting.value }}";
+        $("{{ setting.name }}_PICKER").value = "{{ setting.value }}";
+    {% elif setting.type == "checkbox" %}
+        $("{{ setting.name }}").checked = {{ "true" if setting.value else "false" }};
+    {% endif %}
+{% endfor %}
 
         // Hide modal
         modalOverlay.classList.remove("show");
@@ -334,17 +291,17 @@
       element.innerHTML = '<span class="loader"></span>';
 
       const settings = {
-        INSTAGRAM_USERNAME: $("INSTAGRAM_USERNAME").value,
-        FONT_SIZE: parseInt($("FONT_SIZE").value, 10) || null,
-        FONT_FAMILY: $("FONT_FAMILY").value,
+{% for setting in settings %}
+    {% if setting.name == "PAD_CHARACTER" %}
         PAD_CHARACTER: ($("PAD_CHARACTER").value === " " ? '" "' : $("PAD_CHARACTER").value),
-        MINIMUM_DIGITS: parseInt($("MINIMUM_DIGITS").value, 10) || null,
-        PAGE_BG: $("PAGE_BG").value,
-        FLIP_BG: $("FLIP_BG").value,
-        FLIP_FG: $("FLIP_FG").value,
-        REFRESH_INTERVAL: parseInt($("REFRESH_INTERVAL").value, 10),
-        SHOW_IG_LOGO: $("SHOW_IG_LOGO").checked,
-        SKIP_ANIMATION: $("SKIP_ANIMATION").checked,
+    {% elif setting.type in ["text", "color"] %}
+        {{ setting.name }}: $("{{ setting.name }}").value,
+    {% elif setting.type == "slider" %}
+        {{ setting.name }}: parseInt($("{{ setting.name }}").value, 10) || null,
+    {% elif setting.type == "checkbox" %}
+        {{ setting.name }}: $("{{ setting.name }}").checked,
+    {% endif %}
+{% endfor %}
         LOCK_SETTINGS: $("LOCK_SETTINGS").checked,
       };
 
